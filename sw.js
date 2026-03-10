@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gps-navigator-v3.0';
+const CACHE_NAME = 'gps-navigator-v3.0.1';
 const MAP_CACHE = 'gps-nav-map-tiles-v1';
 
 // Static assets to cache on install
@@ -19,7 +19,19 @@ const STATIC_ASSETS = [
   '/js/map.js',
   '/js/ui.js',
   '/js/utils.js',
-  '/offline.html'
+  '/offline.html',
+  // PWA Icons
+  '/icons/icon-16x16.png',
+  '/icons/icon-32x32.png',
+  '/icons/icon-72x72.png',
+  '/icons/icon-96x96.png',
+  '/icons/icon-128x128.png',
+  '/icons/icon-144x144.png',
+  '/icons/icon-152x152.png',
+  '/icons/icon-180x180.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-384x384.png',
+  '/icons/icon-512x512.png'
 ];
 
 // External CDN resources
@@ -32,7 +44,7 @@ const CDN_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing...');
+  console.log('[SW] Installing v3.0.1...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[SW] Caching static assets');
@@ -51,7 +63,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating...');
+  console.log('[SW] Activating v3.0.1...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
