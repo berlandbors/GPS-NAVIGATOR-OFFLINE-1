@@ -9,7 +9,21 @@
                    style-src 'self' https://unpkg.com https://fonts.googleapis.com;
                    font-src 'self' https://fonts.gstatic.com;
                    img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com;
-                   connect-src 'self' https://nominatim.openstreetmap.org;">
+                   connect-src 'self' https://nominatim.openstreetmap.org;
+                   worker-src 'self';
+                   manifest-src 'self';">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- PWA Theme Colors -->
+    <meta name="theme-color" content="#00ff00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GPS-NAV">
+
+    <!-- PWA Description -->
+    <meta name="description" content="Offline GPS Navigator with Neural Network AI - Track your location, save waypoints, and use AI predictions">
     <title>GPS-NAVIGATOR v3.0 [AI ENHANCED]</title>
 
     <!-- Leaflet CSS -->
