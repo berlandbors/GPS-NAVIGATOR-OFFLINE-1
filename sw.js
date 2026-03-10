@@ -21,17 +21,12 @@ const STATIC_ASSETS = [
   '/js/utils.js',
   '/offline.html',
   // PWA Icons
-  '/icons/icon-16x16.png',
-  '/icons/icon-32x32.png',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
-  '/icons/icon-180x180.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png'
+  '/icons/launchericon-48x48.png',
+  '/icons/launchericon-72x72.png',
+  '/icons/launchericon-96x96.png',
+  '/icons/launchericon-144x144.png',
+  '/icons/launchericon-192x192.png',
+  '/icons/launchericon-512x512.png'
 ];
 
 // External CDN resources
