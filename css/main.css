@@ -222,7 +222,6 @@ h1 {
   height: 500px;
   border: 3px solid var(--terminal-green);
   box-shadow: var(--screen-glow), inset 0 0 20px rgba(0, 255, 0, 0.1);
-  filter: hue-rotate(120deg) saturate(1.2);
 }
 
 .controls {

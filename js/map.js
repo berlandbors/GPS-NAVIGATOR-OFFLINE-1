@@ -12,7 +12,7 @@ export class MapManager {
     this.currentTileLayer = null;
     /** @type {L.Marker[]} */
     this.markers = [];
-    /** @type {L.CircleMarker|null} */
+    /** @type {L.Marker|null} */
     this.currentLocationMarker = null;
     /** @type {L.Circle|null} */
     this.accuracyCircle = null;
@@ -107,25 +107,18 @@ export class MapManager {
     // Remove old accuracy circle if exists
     if (this.accuracyCircle) this.map.removeLayer(this.accuracyCircle);
 
-    // Create accuracy circle (semi-transparent)
+    // Create accuracy circle (semi-transparent blue)
     this.accuracyCircle = L.circle([lat, lng], {
       radius: accuracy,
-      color: '#00ffff',
-      fillColor: '#00ffff',
+      color: '#1E90FF',
+      fillColor: '#1E90FF',
       fillOpacity: 0.15,
-      weight: 1,
+      weight: 2,
       opacity: 0.5
     }).addTo(this.map);
 
-    // Create native marker with custom blue color
-    this.currentLocationMarker = L.circleMarker([lat, lng], {
-      radius: 8,
-      fillColor: '#00ffff',
-      color: '#000',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 1
-    })
+    // Create standard Leaflet marker (native blue pin icon)
+    this.currentLocationMarker = L.marker([lat, lng])
       .addTo(this.map)
       .bindPopup(`
         <h3>&gt; YOUR POSITION (AI SMOOTHED)</h3>
