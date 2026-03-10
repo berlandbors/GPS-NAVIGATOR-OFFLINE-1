@@ -12,8 +12,10 @@ export class MapManager {
     this.currentTileLayer = null;
     /** @type {L.Marker[]} */
     this.markers = [];
-    /** @type {L.Marker|null} */
+    /** @type {L.CircleMarker|null} */
     this.currentLocationMarker = null;
+    /** @type {L.Circle|null} */
+    this.accuracyCircle = null;
     this.currentMapType = 0;
   }
 
@@ -99,16 +101,31 @@ export class MapManager {
    * @param {number} accuracy
    */
   updateCurrentLocationMarker(lat, lng, accuracy) {
+    // Remove old marker
     if (this.currentLocationMarker) this.map.removeLayer(this.currentLocationMarker);
 
-    const customIcon = L.divIcon({
-      className: 'current-location-icon',
-      html: '<div style="background: #00ffff; width: 16px; height: 16px; border-radius: 50%; border: 3px solid #000; box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);"></div>',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8]
-    });
+    // Remove old accuracy circle if exists
+    if (this.accuracyCircle) this.map.removeLayer(this.accuracyCircle);
 
-    this.currentLocationMarker = L.marker([lat, lng], { icon: customIcon })
+    // Create accuracy circle (semi-transparent)
+    this.accuracyCircle = L.circle([lat, lng], {
+      radius: accuracy,
+      color: '#00ffff',
+      fillColor: '#00ffff',
+      fillOpacity: 0.15,
+      weight: 1,
+      opacity: 0.5
+    }).addTo(this.map);
+
+    // Create native marker with custom blue color
+    this.currentLocationMarker = L.circleMarker([lat, lng], {
+      radius: 8,
+      fillColor: '#00ffff',
+      color: '#000',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 1
+    })
       .addTo(this.map)
       .bindPopup(`
         <h3>&gt; YOUR POSITION (AI SMOOTHED)</h3>
