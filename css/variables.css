@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --terminal-green: #00ff00;
+  --terminal-amber: #ffb000;
+  --terminal-red: #ff0000;
+  --terminal-blue: #00ffff;
+  --terminal-purple: #ff00ff;
+  --terminal-bg: #000000;
+  --terminal-text: #00ff00;
+  --terminal-border: #00ff00;
+  --screen-glow: 0 0 10px rgba(0, 255, 0, 0.5);
+  --text-shadow: 0 0 5px rgba(0, 255, 0, 0.8);
+}
