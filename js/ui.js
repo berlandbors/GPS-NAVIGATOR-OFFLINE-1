@@ -342,9 +342,9 @@ export class UIManager {
       alert('> NO AI DATA COLLECTED YET');
       return;
     }
-    const avgAccuracy = data.reduce((s, i) => s + (i.accuracy || 0), 0) / data.length;
-    const bestAccuracy = Math.min(...data.map(i => i.accuracy || 999));
-    const worstAccuracy = Math.max(...data.map(i => i.accuracy || 0));
+    const avgAccuracy = data.reduce((sum, item) => sum + (item.accuracy || 0), 0) / data.length;
+    const bestAccuracy = Math.min(...data.map(item => item.accuracy || 999));
+    const worstAccuracy = Math.max(...data.map(item => item.accuracy || 0));
     alert(`> AI STATISTICS:\n\nTotal Samples: ${data.length}\nAverage Accuracy: ${avgAccuracy.toFixed(1)}m\nBest Accuracy: ${bestAccuracy.toFixed(1)}m\nWorst Accuracy: ${worstAccuracy.toFixed(1)}m\nNeural Network Training Count: ${this.nn.trainingCount}`);
   }
 

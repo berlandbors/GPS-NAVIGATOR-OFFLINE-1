@@ -106,7 +106,7 @@ export class NeuralNetwork {
 
     for (let i = 0; i < hidden.length; i++) {
       for (let j = 0; j < outputs.length; j++) {
-        this.weightsHO[i][j] += hiddenGradients[j] * hidden[i];
+        this.weightsHO[i][j] += outputGradients[j] * hidden[i];
       }
     }
 
