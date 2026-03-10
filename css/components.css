@@ -432,3 +432,152 @@ input[type="text"]::placeholder {
     padding: 15px;
   }
 }
+
+/* ============================================
+   PWA INSTALL PROMOTION BANNER
+   ============================================ */
+
+.install-promo {
+  display: none;
+  position: relative;
+  background: linear-gradient(135deg, #001100 0%, #002200 100%);
+  border: 2px solid #00ff00;
+  border-radius: 0;
+  padding: 25px;
+  margin: 20px 0;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.install-promo.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.install-promo::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    #00ff00 0%, 
+    #00ff00 25%, 
+    transparent 25%, 
+    transparent 50%, 
+    #00ff00 50%, 
+    #00ff00 75%, 
+    transparent 75%);
+  background-size: 20px 3px;
+  animation: scan-line 2s linear infinite;
+}
+
+.promo-content h3 {
+  color: #00ff00;
+  font-size: 22px;
+  margin: 0 0 15px 0;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  letter-spacing: 1px;
+}
+
+.promo-features {
+  margin: 15px 0;
+  padding: 15px;
+  background: rgba(0, 255, 0, 0.05);
+  border-left: 3px solid #00ff00;
+}
+
+.promo-features .feature {
+  color: #00ff00;
+  font-size: 16px;
+  padding: 8px 0;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.promo-controls {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.promo-controls button {
+  flex: 1;
+  min-width: 180px;
+  max-width: 250px;
+  padding: 15px 25px;
+  font-size: 18px;
+}
+
+#installAppBtn {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.8), 0 0 30px rgba(0, 255, 0, 0.4);
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 0;
+  }
+}
+
+.secondary {
+  background: rgba(0, 255, 0, 0.1);
+  color: #00ff00;
+  border: 2px solid #00ff00;
+}
+
+.secondary:hover {
+  background: rgba(0, 255, 0, 0.2);
+}
+
+.secondary:active {
+  background: rgba(0, 255, 0, 0.3);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .install-promo {
+    padding: 20px 15px;
+    margin: 15px 0;
+  }
+
+  .promo-content h3 {
+    font-size: 18px;
+  }
+
+  .promo-features .feature {
+    font-size: 14px;
+    padding: 6px 0;
+  }
+
+  .promo-controls {
+    flex-direction: column;
+  }
+
+  .promo-controls button {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Hide promo when app is installed */
+.pwa-installed .install-promo {
+  display: none !important;
+}

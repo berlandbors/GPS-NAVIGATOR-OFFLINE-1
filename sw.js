@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   '/css/main.css',
   '/js/app.js',
   '/js/sw-register.js',
+  '/js/pwa-install.js',
   '/js/config.js',
   '/js/database.js',
   '/js/neural-network.js',

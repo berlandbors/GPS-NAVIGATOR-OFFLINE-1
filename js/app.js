@@ -3,6 +3,7 @@ import { Database } from './database.js';
 import { GPSManager } from './gps.js';
 import { MapManager } from './map.js';
 import { UIManager } from './ui.js';
+import { PWAInstaller } from './pwa-install.js';
 
 /**
  * Root application class - wires all modules together.
@@ -40,6 +41,11 @@ class GPSNavigatorApp {
       });
 
       this.ui.setupEventListeners();
+
+      // Initialize PWA installer
+      const pwaInstaller = new PWAInstaller();
+      pwaInstaller.init();
+      console.log('[APP] PWA installer initialized');
 
       // Initial online status
       this.ui._updateConnectionStatus(navigator.onLine);
