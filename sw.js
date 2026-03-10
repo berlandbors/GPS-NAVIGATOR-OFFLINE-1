@@ -3,31 +3,31 @@ const MAP_CACHE = 'gps-nav-map-tiles-v1';
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/css/variables.css',
-  '/css/animations.css',
-  '/css/components.css',
-  '/css/main.css',
-  '/js/app.js',
-  '/js/sw-register.js',
-  '/js/pwa-install.js',
-  '/js/config.js',
-  '/js/database.js',
-  '/js/neural-network.js',
-  '/js/gps.js',
-  '/js/map.js',
-  '/js/ui.js',
-  '/js/utils.js',
-  '/offline.html',
+  '/GPS-NAVIGATOR-OFFLINE-1/',
+  '/GPS-NAVIGATOR-OFFLINE-1/index.html',
+  '/GPS-NAVIGATOR-OFFLINE-1/manifest.json',
+  '/GPS-NAVIGATOR-OFFLINE-1/css/variables.css',
+  '/GPS-NAVIGATOR-OFFLINE-1/css/animations.css',
+  '/GPS-NAVIGATOR-OFFLINE-1/css/components.css',
+  '/GPS-NAVIGATOR-OFFLINE-1/css/main.css',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/app.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/sw-register.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/pwa-install.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/config.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/database.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/neural-network.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/gps.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/map.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/ui.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/js/utils.js',
+  '/GPS-NAVIGATOR-OFFLINE-1/offline.html',
   // PWA Icons
-  '/icons/launchericon-48x48.png',
-  '/icons/launchericon-72x72.png',
-  '/icons/launchericon-96x96.png',
-  '/icons/launchericon-144x144.png',
-  '/icons/launchericon-192x192.png',
-  '/icons/launchericon-512x512.png'
+  '/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-48x48.png',
+  '/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-72x72.png',
+  '/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-96x96.png',
+  '/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-144x144.png',
+  '/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-192x192.png',
+  '/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-512x512.png'
 ];
 
 // External CDN resources
@@ -134,7 +134,7 @@ self.addEventListener('fetch', (event) => {
         }).catch(() => {
           // Return offline page for navigation requests
           if (event.request.mode === 'navigate') {
-            return caches.match('/offline.html');
+            return caches.match('/GPS-NAVIGATOR-OFFLINE-1/offline.html');
           }
         });
       })

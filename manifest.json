@@ -2,8 +2,8 @@
   "name": "GPS-NAVIGATOR v3.0 AI ENHANCED",
   "short_name": "GPS-NAV",
   "description": "Offline GPS Navigator with Neural Network AI and location tracking",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/GPS-NAVIGATOR-OFFLINE-1/",
+  "scope": "/GPS-NAVIGATOR-OFFLINE-1/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#000000",
@@ -13,37 +13,37 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/icons/launchericon-48x48.png",
+      "src": "/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-48x48.png",
       "sizes": "48x48",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/launchericon-72x72.png",
+      "src": "/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-72x72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/launchericon-96x96.png",
+      "src": "/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-96x96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/launchericon-144x144.png",
+      "src": "/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/launchericon-192x192.png",
+      "src": "/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/launchericon-512x512.png",
+      "src": "/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -54,10 +54,10 @@
       "name": "Start Tracking",
       "short_name": "Track",
       "description": "Begin GPS location tracking",
-      "url": "/?action=track",
+      "url": "/GPS-NAVIGATOR-OFFLINE-1/?action=track",
       "icons": [
         {
-          "src": "/icons/launchericon-96x96.png",
+          "src": "/GPS-NAVIGATOR-OFFLINE-1/icons/launchericon-96x96.png",
           "sizes": "96x96",
           "type": "image/png"
         }
