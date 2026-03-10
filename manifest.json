@@ -1,0 +1,14 @@
+{
+  "name": "GPS-NAVIGATOR v3.0 AI ENHANCED",
+  "short_name": "GPS-NAV",
+  "description": "Offline GPS Navigator with Neural Network AI and location tracking",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#00ff00",
+  "categories": ["navigation", "utilities", "travel"],
+  "lang": "ru-RU",
+  "dir": "ltr"
+}
