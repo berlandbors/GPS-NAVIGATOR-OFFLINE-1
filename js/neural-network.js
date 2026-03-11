@@ -85,6 +85,22 @@ export class NeuralNetwork {
    * @param {number[]} targets
    */
   train(inputs, targets) {
+    // Validate inputs
+    if (!inputs || inputs.length !== this.inputSize) {
+      console.error('[NN] Invalid inputs:', inputs);
+      return;
+    }
+    if (!targets || targets.length !== this.outputSize) {
+      console.error('[NN] Invalid targets:', targets);
+      return;
+    }
+
+    // Check for NaN values
+    if (inputs.some(v => isNaN(v)) || targets.some(v => isNaN(v))) {
+      console.error('[NN] NaN detected in training data');
+      return;
+    }
+
     const { hidden, outputs } = this.forward(inputs);
 
     const outputErrors = outputs.map((o, i) => targets[i] - o);
