@@ -101,9 +101,15 @@ class GPSNavigatorApp {
         console.log('Neural network loaded from DB');
       }
 
+      // Check GPS permissions on load
+      await this.checkInitialGPSStatus();
+
       // Set a random operator name
       document.getElementById('userName').textContent =
         'OPERATOR_' + Math.random().toString(36).substring(2, 7).toUpperCase();
+
+      // Log GPS diagnostic information
+      this.logGPSDiagnostics();
 
       setTimeout(async () => {
         await this.ui.loadPoints();
@@ -127,6 +133,67 @@ class GPSNavigatorApp {
 
     if (countEl) countEl.textContent = stats.count;
     if (sizeEl) sizeEl.textContent = stats.sizeMB;
+  }
+
+  /**
+   * Log GPS diagnostic information for debugging
+   */
+  logGPSDiagnostics() {
+    console.log('╔════════════════════════════════════╗');
+    console.log('║    GPS DIAGNOSTICS v3.0           ║');
+    console.log('╚════════════════════════════════════╝');
+    console.log('Secure Context (HTTPS):', window.isSecureContext);
+    console.log('Protocol:', window.location.protocol);
+    console.log('Hostname:', window.location.hostname);
+    console.log('Full URL:', window.location.href);
+    console.log('───────────────────────────────────');
+    console.log('Geolocation API:', 'geolocation' in navigator ? '✅ Available' : '❌ Not available');
+    console.log('Permissions API:', 'permissions' in navigator ? '✅ Available' : '⚠️ Not available');
+    console.log('Service Worker:', 'serviceWorker' in navigator ? '✅ Available' : '❌ Not available');
+    console.log('───────────────────────────────────');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Online status:', navigator.onLine ? '🌐 ONLINE' : '📴 OFFLINE');
+    console.log('Platform:', navigator.platform);
+    console.log('Language:', navigator.language);
+    console.log('════════════════════════════════════');
+  }
+
+  /**
+   * Check GPS status and permissions on application load
+   */
+  async checkInitialGPSStatus() {
+    try {
+      console.log('[APP] Checking initial GPS permissions...');
+      const permissionState = await this.gps.checkPermissions();
+      console.log('[APP] Initial GPS permission state:', permissionState);
+
+      const aiStatusEl = document.getElementById('aiStatus');
+
+      if (permissionState === 'denied') {
+        if (aiStatusEl) {
+          aiStatusEl.textContent = 'WAITING FOR GPS PERMISSION';
+          aiStatusEl.style.color = 'var(--terminal-red)';
+        }
+
+        // Show a non-intrusive warning
+        const outputEl = document.getElementById('output');
+        if (outputEl) {
+          outputEl.className = 'warning';
+          outputEl.innerHTML = '&gt; ⚠️ GPS PERMISSION DENIED - Grant access to enable location features';
+        }
+      } else if (permissionState === 'prompt') {
+        if (aiStatusEl) {
+          aiStatusEl.textContent = 'READY (Permission required)';
+        }
+      } else {
+        if (aiStatusEl) {
+          aiStatusEl.textContent = 'READY';
+          aiStatusEl.style.color = 'var(--terminal-green)';
+        }
+      }
+    } catch (error) {
+      console.error('[APP] Could not check GPS permissions:', error);
+    }
   }
 
   /** Wire up the offline map download buttons. */
