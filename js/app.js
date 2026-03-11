@@ -105,6 +105,12 @@ class GPSNavigatorApp {
       document.getElementById('userName').textContent =
         'OPERATOR_' + Math.random().toString(36).substring(2, 7).toUpperCase();
 
+      // Log GPS diagnostic information
+      this.logGPSDiagnostics();
+
+      // Check GPS permissions on load
+      await this.checkInitialGPSStatus();
+
       setTimeout(async () => {
         await this.ui.loadPoints();
         this.ui.updateAIStatus();
@@ -175,6 +181,42 @@ class GPSNavigatorApp {
         alert('> Map cache cleared successfully');
       }
     });
+  }
+
+  /**
+   * Log GPS diagnostic information for debugging
+   */
+  logGPSDiagnostics() {
+    console.log('=== GPS DIAGNOSTICS ===');
+    console.log('Secure Context (HTTPS):', window.isSecureContext);
+    console.log('Protocol:', window.location.protocol);
+    console.log('Hostname:', window.location.hostname);
+    console.log('Geolocation API available:', 'geolocation' in navigator);
+    console.log('Permissions API available:', 'permissions' in navigator);
+    console.log('Service Worker available:', 'serviceWorker' in navigator);
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Online status:', navigator.onLine);
+    console.log('======================');
+  }
+
+  /**
+   * Check GPS status on application load
+   */
+  async checkInitialGPSStatus() {
+    try {
+      const permissionState = await this.gps.checkPermissions();
+      console.log('[APP] Initial GPS permission state:', permissionState);
+
+      if (permissionState === 'denied') {
+        const aiStatusEl = document.getElementById('aiStatus');
+        if (aiStatusEl) {
+          aiStatusEl.textContent = 'WAITING FOR GPS PERMISSION';
+          aiStatusEl.style.color = 'var(--terminal-red)';
+        }
+      }
+    } catch (error) {
+      console.error('[APP] Could not check GPS permissions:', error);
+    }
   }
 
   /** Display the boot sequence animation. */

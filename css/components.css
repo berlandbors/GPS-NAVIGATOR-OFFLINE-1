@@ -658,3 +658,27 @@ progress::-moz-progress-bar {
   background: var(--terminal-red);
   color: var(--terminal-bg);
 }
+
+/* GPS status indicator */
+.gps-status-indicator {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 5px 10px;
+  border: 2px solid var(--terminal-green);
+  animation: pulse 2s infinite;
+}
+
+.gps-status-indicator.searching {
+  border-color: var(--terminal-amber);
+  color: var(--terminal-amber);
+}
+
+.gps-status-indicator.active {
+  border-color: var(--terminal-green);
+  color: var(--terminal-green);
+}
+
+.gps-status-indicator.error {
+  border-color: var(--terminal-red);
+  color: var(--terminal-red);
+}

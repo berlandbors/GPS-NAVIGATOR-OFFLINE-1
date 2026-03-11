@@ -4,7 +4,7 @@ export const CONFIG = {
   STORE_NAME: "gpsPoints",
   GEOCODE_CACHE_STORE: "geocodeCache",
   AI_DATA_STORE: "aiTrainingData",
-  GPS_TIMEOUT: 30000,
+  GPS_TIMEOUT: 60000, // Increased from 30000 to 60000ms (60 seconds) for indoor GPS
   TRACKING_TIMEOUT: 15000,
   MAP_UPDATE_DEBOUNCE: 1000,
   GEOCODE_TIMEOUT: 5000,

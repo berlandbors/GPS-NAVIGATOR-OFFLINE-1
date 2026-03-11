@@ -50,6 +50,51 @@ export class GPSManager {
     this._onPointsSaved = callbacks.onPointsSaved || null;
   }
 
+  /**
+   * Check geolocation permissions status.
+   * @returns {Promise<string>} Permission state: 'granted', 'denied', or 'prompt'
+   */
+  async checkPermissions() {
+    try {
+      const result = await navigator.permissions.query({ name: 'geolocation' });
+
+      console.log('[GPS] Permission state:', result.state);
+
+      if (result.state === 'denied') {
+        throw new Error('GEOLOCATION PERMISSION DENIED IN BROWSER SETTINGS');
+      }
+
+      // Listen for permission changes
+      result.addEventListener('change', () => {
+        console.log('[GPS] Permission changed to:', result.state);
+        if (result.state === 'denied') {
+          alert('⚠️ GPS ACCESS WAS REVOKED! Enable it in browser settings.');
+        }
+      });
+
+      return result.state;
+    } catch (error) {
+      console.error('[GPS] Permissions check failed:', error);
+      // If Permissions API not supported, assume prompt state
+      return 'prompt';
+    }
+  }
+
+  /**
+   * Update GPS status indicator in UI.
+   * @param {string} status - 'idle', 'searching', 'active', 'error'
+   * @param {string} text - Status text to display
+   */
+  _updateGPSStatus(status, text) {
+    const statusEl = document.getElementById('gpsStatus');
+    const statusTextEl = document.getElementById('gpsStatusText');
+
+    if (statusEl && statusTextEl) {
+      statusEl.className = `gps-status-indicator ${status}`;
+      statusTextEl.textContent = text;
+    }
+  }
+
   /** Set online status. */
   setOnline(value) {
     this.isOnline = value;
@@ -64,18 +109,26 @@ export class GPSManager {
     const now = new Date();
     const hour = now.getHours();
     const dayOfWeek = now.getDay();
-    const { latitude, longitude, accuracy, speed } = position.coords;
+    const { latitude, longitude, accuracy, speed, altitude, heading } = position.coords;
+
+    // Ensure all values are valid numbers, use defaults for null/undefined
+    const safeSpeed = (speed !== null && speed !== undefined) ? speed : 0;
+    const safeAltitude = (altitude !== null && altitude !== undefined) ? altitude : 0;
+    const safeAccuracy = accuracy || 100; // Default to 100m if not provided
 
     this.db.saveAITrainingData({
-      hour, dayOfWeek, latitude, longitude, accuracy, speed: speed || 0,
+      hour, dayOfWeek, latitude, longitude,
+      accuracy: safeAccuracy,
+      speed: safeSpeed,
+      altitude: safeAltitude,
       timestamp: now.toISOString()
     });
 
-    const inputs = normalizeInput(hour, dayOfWeek, latitude, longitude, accuracy, speed || 0);
+    const inputs = normalizeInput(hour, dayOfWeek, latitude, longitude, safeAccuracy, safeSpeed);
     const targets = [
-      Math.min(accuracy / 100, 1),
-      accuracy < 30 ? 1 : 0,
-      accuracy > 50 ? 0 : 1
+      Math.min(safeAccuracy / 100, 1),
+      safeAccuracy < 30 ? 1 : 0,
+      safeAccuracy > 50 ? 0 : 1
     ];
 
     this.nn.train(inputs, targets);
@@ -107,69 +160,51 @@ export class GPSManager {
    * Get current position, reverse-geocode it, and show it in the location modal.
    * Called by the [SHOW MY LOCATION] button.
    */
-  getLocationAndDisplay() {
+  async getLocationAndDisplay() {
     const outputEl = document.getElementById("output");
     outputEl.className = "info";
-    outputEl.innerHTML = '&gt; ACQUIRING GPS SIGNAL (UP TO 30s)<span class="loading"></span>';
-
-    if (!navigator.geolocation) {
-      outputEl.className = "error";
-      outputEl.innerHTML = "&gt; ERROR: GEOLOCATION NOT SUPPORTED";
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        this._collectGPSDataForAI(position);
-        const smoothed = this._smooth(position);
-        const { altitude, accuracy, speed, heading } = position.coords;
-        const { timestamp } = position;
-
-        this.currentLocationData = {
-          lat: smoothed.lat, lng: smoothed.lng,
-          alt: altitude, acc: accuracy,
-          speed, heading, timestamp
-        };
-
-        const links = generateMapLinks(smoothed.lat, smoothed.lng);
-        const geocodeResult = await reverseGeocode(smoothed.lat, smoothed.lng, this.db, this.isOnline);
-
-        const htmlContent = this._generateLocationHTML(
-          smoothed.lat, smoothed.lng, altitude, accuracy, timestamp,
-          geocodeResult.cityName, geocodeResult.fullAddress, links, geocodeResult.fromCache
-        );
-
-        document.getElementById('locationDisplayContent').innerHTML = htmlContent;
-        document.getElementById('locationModal').classList.add('active');
-
-        outputEl.className = "success";
-        outputEl.innerHTML = "&gt; LOCATION DATA ACQUIRED SUCCESSFULLY (Click [SHOW MY LOCATION] to view again)";
-
-        this.currentUserPosition = { lat: smoothed.lat, lng: smoothed.lng };
-        this.mapManager.updateCurrentLocationMarker(smoothed.lat, smoothed.lng, accuracy);
-        this.mapManager.map.setView([smoothed.lat, smoothed.lng], 15);
-
-        if (this._onAIUpdate) this._onAIUpdate();
-      },
-      (error) => this._handleGeolocationError(error, outputEl),
-      { enableHighAccuracy: true, timeout: CONFIG.GPS_TIMEOUT, maximumAge: 0 }
-    );
-  }
+    outputEl.innerHTML = `&gt; ACQUIRING GPS SIGNAL (UP TO ${CONFIG.GPS_TIMEOUT / 1000}s)<span class="loading"></span>`;
 
   /**
    * Get current position and save it as a waypoint.
    * Called by the [GET COORDINATES AND SAVE] button.
    */
-  getLocationAndSave() {
+  async getLocationAndSave() {
     const outputEl = document.getElementById("output");
     const pointNameInput = document.getElementById("pointName");
 
     outputEl.className = "info";
-    outputEl.innerHTML = '&gt; ACQUIRING GPS SIGNAL (UP TO 30s)<span class="loading"></span>';
+    outputEl.innerHTML = `&gt; ACQUIRING GPS SIGNAL (UP TO ${CONFIG.GPS_TIMEOUT / 1000}s)<span class="loading"></span>`;
+
+    // Check if running in secure context (HTTPS or localhost)
+    if (!window.isSecureContext) {
+      outputEl.className = "error";
+      outputEl.innerHTML = `
+        &gt; ERROR: GEOLOCATION REQUIRES SECURE CONTEXT<br>
+        &gt; CURRENT: ${window.location.protocol}//${window.location.host}<br>
+        &gt; REQUIRED: HTTPS or localhost<br>
+        &gt; Please access via https:// or localhost
+      `;
+      this._updateGPSStatus('error', 'ERROR');
+      return;
+    }
+
+    // Check permissions before requesting location
+    const permissionState = await this.checkPermissions();
+    if (permissionState === 'denied') {
+      outputEl.className = "error";
+      outputEl.innerHTML = `
+        &gt; ERROR: GEOLOCATION PERMISSION DENIED<br>
+        &gt; Please allow location access in browser settings
+      `;
+      this._updateGPSStatus('error', 'ERROR');
+      return;
+    }
 
     if (!navigator.geolocation) {
       outputEl.className = "error";
       outputEl.innerHTML = "&gt; ERROR: GEOLOCATION NOT SUPPORTED";
+      this._updateGPSStatus('error', 'ERROR');
       return;
     }
 
@@ -179,6 +214,8 @@ export class GPSManager {
       outputEl.innerHTML = "&gt; ERROR: INVALID WAYPOINT NAME (MAX 100 CHARS)";
       return;
     }
+
+    this._updateGPSStatus('searching', 'SEARCHING...');
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -209,15 +246,20 @@ export class GPSManager {
             &gt; TIME: ${new Date(point.timestamp).toLocaleString("ru-RU")}
           `;
           pointNameInput.value = "";
+          this._updateGPSStatus('active', 'LOCKED');
           if (this._onPointsSaved) this._onPointsSaved();
           if (this._onAIUpdate) this._onAIUpdate();
         } catch (error) {
           outputEl.className = "error";
           outputEl.innerHTML = `&gt; ERROR: ${escapeHtml(error.toString())}`;
+          this._updateGPSStatus('error', 'ERROR');
         }
       },
-      (error) => this._handleGeolocationError(error, outputEl),
-      { enableHighAccuracy: true, timeout: CONFIG.GPS_TIMEOUT, maximumAge: 0 }
+      (error) => {
+        this._handleGeolocationError(error, outputEl);
+        this._updateGPSStatus('error', 'ERROR');
+      },
+      { enableHighAccuracy: true, timeout: CONFIG.GPS_TIMEOUT, maximumAge: 5000 }
     );
   }
 
@@ -225,7 +267,7 @@ export class GPSManager {
    * Toggle continuous GPS tracking on/off.
    * Called by the [START TRACKING] / [STOP TRACKING] button.
    */
-  trackLocation() {
+  async trackLocation() {
     const trackBtn = document.getElementById("trackBtn");
     const outputEl = document.getElementById("output");
 
@@ -237,13 +279,40 @@ export class GPSManager {
       outputEl.className = "info";
       outputEl.innerHTML = "&gt; TRACKING STOPPED";
       this.currentUserPosition = null;
+      this._updateGPSStatus('idle', 'IDLE');
       if (this._onPointsSaved) this._onPointsSaved();
+      return;
+    }
+
+    // Check if running in secure context (HTTPS or localhost)
+    if (!window.isSecureContext) {
+      outputEl.className = "error";
+      outputEl.innerHTML = `
+        &gt; ERROR: GEOLOCATION REQUIRES SECURE CONTEXT<br>
+        &gt; CURRENT: ${window.location.protocol}//${window.location.host}<br>
+        &gt; REQUIRED: HTTPS or localhost<br>
+        &gt; Please access via https:// or localhost
+      `;
+      this._updateGPSStatus('error', 'ERROR');
+      return;
+    }
+
+    // Check permissions before requesting location
+    const permissionState = await this.checkPermissions();
+    if (permissionState === 'denied') {
+      outputEl.className = "error";
+      outputEl.innerHTML = `
+        &gt; ERROR: GEOLOCATION PERMISSION DENIED<br>
+        &gt; Please allow location access in browser settings
+      `;
+      this._updateGPSStatus('error', 'ERROR');
       return;
     }
 
     if (!navigator.geolocation) {
       outputEl.className = "error";
       outputEl.innerHTML = "&gt; ERROR: GEOLOCATION NOT SUPPORTED";
+      this._updateGPSStatus('error', 'ERROR');
       return;
     }
 
@@ -251,6 +320,7 @@ export class GPSManager {
     trackBtn.innerHTML = "[STOP TRACKING]";
     trackBtn.style.borderColor = "var(--terminal-red)";
     trackBtn.style.color = "var(--terminal-red)";
+    this._updateGPSStatus('searching', 'SEARCHING...');
 
     this.trackingId = navigator.geolocation.watchPosition(
       (position) => this._debouncedTrackingUpdate(position),
@@ -261,8 +331,9 @@ export class GPSManager {
         trackBtn.className = "success";
         trackBtn.style.borderColor = "";
         trackBtn.style.color = "";
+        this._updateGPSStatus('error', 'ERROR');
       },
-      { enableHighAccuracy: true, timeout: CONFIG.TRACKING_TIMEOUT, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: CONFIG.TRACKING_TIMEOUT, maximumAge: 1000 }
     );
   }
 
@@ -285,26 +356,80 @@ export class GPSManager {
 
     this.currentUserPosition = { lat: smoothed.lat, lng: smoothed.lng };
     this.mapManager.updateCurrentLocationMarker(smoothed.lat, smoothed.lng, accuracy);
+    this._updateGPSStatus('active', 'LOCKED');
 
     if (this._onPointsSaved) this._onPointsSaved();
     if (this._onAIUpdate) this._onAIUpdate();
   }
 
-  /** @private */
+  /**
+   * @private
+   * Handle geolocation errors with detailed user guidance
+   */
   _handleGeolocationError(error, outputEl) {
     outputEl.className = "error";
+
+    console.error('[GPS] Error code:', error.code);
+    console.error('[GPS] Error message:', error.message);
+    console.error('[GPS] Full error:', error);
+
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        outputEl.innerHTML = "&gt; ERROR: GEOLOCATION ACCESS DENIED<br>&gt; GRANT PERMISSION IN BROWSER SETTINGS";
+        outputEl.innerHTML = `
+          <strong>&gt; ERROR: GEOLOCATION ACCESS DENIED</strong><br>
+          &gt; <span style="color: var(--terminal-amber);">STEPS TO FIX:</span><br>
+          &gt; 1. Look for 🔒 icon in browser address bar<br>
+          &gt; 2. Click it → Site Settings → Location<br>
+          &gt; 3. Change to "Allow"<br>
+          &gt; 4. Reload page (F5)<br>
+          <br>
+          &gt; <strong>Chrome/Edge:</strong> Settings → Privacy → Site Settings → Location<br>
+          &gt; <strong>Firefox:</strong> Page Info (Ctrl+I) → Permissions → Location<br>
+          &gt; <strong>Safari:</strong> Safari → Settings → Websites → Location
+        `;
         break;
+
       case error.POSITION_UNAVAILABLE:
-        outputEl.innerHTML = "&gt; ERROR: POSITION UNAVAILABLE<br>&gt; CHECK GPS SETTINGS<br>&gt; TRY MOVING TO OPEN AREA";
+        outputEl.innerHTML = `
+          <strong>&gt; ERROR: POSITION UNAVAILABLE</strong><br>
+          &gt; <span style="color: var(--terminal-amber);">POSSIBLE CAUSES:</span><br>
+          &gt; • You are indoors (GPS needs clear sky view)<br>
+          &gt; • Location services disabled on device<br>
+          &gt; • GPS hardware malfunction<br>
+          &gt; • No GPS satellites in range<br>
+          <br>
+          &gt; <span style="color: var(--terminal-green);">TRY THIS:</span><br>
+          &gt; • Move closer to window or go outdoors<br>
+          &gt; • Enable Location Services in device settings<br>
+          &gt; • Check if GPS works in Google Maps<br>
+          &gt; • Restart browser/device
+        `;
         break;
+
       case error.TIMEOUT:
-        outputEl.innerHTML = "&gt; ERROR: GPS TIMEOUT<br>&gt; SIGNAL ACQUISITION TAKING TOO LONG<br>&gt; RETRY IN OPEN AREA";
+        outputEl.innerHTML = `
+          <strong>&gt; ERROR: GPS TIMEOUT (${CONFIG.GPS_TIMEOUT / 1000} seconds)</strong><br>
+          &gt; <span style="color: var(--terminal-amber);">This is NORMAL for first GPS fix!</span><br>
+          <br>
+          &gt; GPS satellites need time to acquire signal.<br>
+          &gt; First fix can take 30-90 seconds, especially indoors.<br>
+          <br>
+          &gt; <span style="color: var(--terminal-green);">RECOMMENDATIONS:</span><br>
+          &gt; • Wait 30 seconds and try again<br>
+          &gt; • Move to location with clear sky view<br>
+          &gt; • Ensure device GPS is enabled<br>
+          &gt; • Try [START TRACKING] for continuous updates
+        `;
         break;
+
       default:
-        outputEl.innerHTML = "&gt; ERROR: UNKNOWN GEOLOCATION ERROR";
+        outputEl.innerHTML = `
+          <strong>&gt; ERROR: UNKNOWN GEOLOCATION ERROR</strong><br>
+          &gt; Code: ${error.code}<br>
+          &gt; Message: ${escapeHtml(error.message)}<br>
+          <br>
+          &gt; Please check browser console (F12) for details
+        `;
     }
   }
 

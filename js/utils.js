@@ -101,10 +101,28 @@ export function generateGeocodeKey(lat, lng) {
  * @returns {{ class: string, text: string }}
  */
 export function assessGPSQuality(accuracy) {
-  if (accuracy <= 10) return { class: 'excellent', text: 'EXCELLENT (±' + accuracy.toFixed(1) + 'm)' };
-  if (accuracy <= 30) return { class: 'good', text: 'GOOD (±' + accuracy.toFixed(1) + 'm)' };
-  if (accuracy <= 100) return { class: 'fair', text: 'FAIR (±' + accuracy.toFixed(1) + 'm)' };
-  return { class: 'poor', text: 'POOR (±' + accuracy.toFixed(1) + 'm)' };
+  if (accuracy <= 10) {
+    return {
+      class: 'excellent',
+      text: `EXCELLENT (±${accuracy.toFixed(1)}m)`
+    };
+  }
+  if (accuracy <= 20) {
+    return {
+      class: 'good',
+      text: `GOOD (±${accuracy.toFixed(1)}m)`
+    };
+  }
+  if (accuracy <= 50) {
+    return {
+      class: 'fair',
+      text: `FAIR (±${accuracy.toFixed(1)}m)`
+    };
+  }
+  return {
+    class: 'poor',
+    text: `POOR (±${accuracy.toFixed(1)}m)`
+  };
 }
 
 /**
