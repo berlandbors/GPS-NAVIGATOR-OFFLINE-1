@@ -27,6 +27,16 @@ export class MapManager {
       attribution: type.attribution,
       maxZoom: 19
     }).addTo(this.map);
+
+    // Smart prefetching: cache tiles as user browses
+    this.map.on('moveend', () => {
+      const center = this.map.getCenter();
+      const zoom = this.map.getZoom();
+
+      if (window.mapPrefetcher) {
+        window.mapPrefetcher.prefetchNeighbors(center.lat, center.lng, zoom);
+      }
+    });
   }
 
   /** Cycle through available map tile layers. */

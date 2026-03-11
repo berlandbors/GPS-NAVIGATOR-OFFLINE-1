@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self'; 
                    script-src 'self' https://unpkg.com https://html2canvas.hertzen.com;
-                   style-src 'self' https://unpkg.com https://fonts.googleapis.com;
+                   style-src 'self' https://unpkg.com https://fonts.googleapis.com 'sha256-IQ98E1KSskOwdQeemZrn50PnVS3J+VSqMczc6BagOYs=';
                    font-src 'self' https://fonts.gstatic.com;
                    img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://server.arcgisonline.com https://raw.githubusercontent.com https://cdnjs.cloudflare.com https://unpkg.com;
                    connect-src 'self' https://nominatim.openstreetmap.org;
@@ -63,11 +63,65 @@
       crossorigin=""
     />
 
+    <!-- CRITICAL INLINE CSS - Always loads first for offline reliability -->
+    <style>
+    /* Critical CSS Variables - Inline for offline reliability */
+    :root {
+      --terminal-bg: #0a0a0a;
+      --terminal-text: #00ff00;
+      --terminal-green: #00ff00;
+      --terminal-blue: #00ffff;
+      --terminal-red: #ff0000;
+      --terminal-amber: #ffb000;
+      --terminal-purple: #ff00ff;
+      --terminal-border: #00ff00;
+      --text-shadow: 0 0 5px rgba(0, 255, 0, 0.8);
+      --screen-glow: 0 0 20px rgba(0, 255, 0, 0.3);
+    }
+
+    /* Critical fallback styles */
+    body {
+      background: #0a0a0a !important;
+      color: #00ff00 !important;
+      font-family: 'Courier New', 'VT323', monospace;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      border: 3px solid #00ff00;
+      padding: 20px;
+      background: #0a0a0a;
+    }
+
+    button {
+      background: rgba(0, 255, 0, 0.1);
+      color: #00ff00;
+      border: 2px solid #00ff00;
+      padding: 10px 20px;
+      font-family: inherit;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    input {
+      background: rgba(0, 255, 0, 0.05);
+      color: #00ff00;
+      border: 2px solid #00ff00;
+      padding: 10px;
+      font-family: inherit;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+
     <!-- Local CSS -->
-    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="/GPS-NAVIGATOR-OFFLINE-1/css/variables.css">
+    <link rel="stylesheet" href="/GPS-NAVIGATOR-OFFLINE-1/css/animations.css">
+    <link rel="stylesheet" href="/GPS-NAVIGATOR-OFFLINE-1/css/components.css">
+    <link rel="stylesheet" href="/GPS-NAVIGATOR-OFFLINE-1/css/main.css">
   </head>
   <body>
     <!-- Boot Screen -->
@@ -166,6 +220,33 @@
           <button id="resetAIBtn" class="danger">
             [RESET AI DATA]
           </button>
+        </div>
+      </div>
+
+      <!-- Offline Map Download Section -->
+      <div class="section">
+        <h2>OFFLINE MAP DOWNLOAD</h2>
+        <div class="offline-info warning">
+          &gt; <strong>IMPORTANT:</strong> Download map tiles while online to use them offline later<br>
+          &gt; Your GPS location will be cached automatically
+        </div>
+        <div class="controls">
+          <button id="downloadCurrentAreaBtn" class="success">
+            [DOWNLOAD CURRENT AREA]
+          </button>
+          <button id="downloadCustomAreaBtn" class="export-btn">
+            [DOWNLOAD CUSTOM COORDINATES]
+          </button>
+          <button id="viewCacheStatsBtn">
+            [VIEW CACHE INFO]
+          </button>
+          <button id="clearMapCacheBtn" class="danger">
+            [CLEAR MAP CACHE]
+          </button>
+        </div>
+        <div id="cacheStats" class="stats">
+          &gt;&gt; CACHED MAP TILES: <span id="cachedTilesCount">Loading...</span><br>
+          &gt;&gt; STORAGE USED: <span id="storageUsed">Loading...</span> MB
         </div>
       </div>
 

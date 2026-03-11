@@ -4,6 +4,7 @@ import { GPSManager } from './gps.js';
 import { MapManager } from './map.js';
 import { UIManager } from './ui.js';
 import { PWAInstaller } from './pwa-install.js';
+import { MapTilePrefetcher } from './map-prefetcher.js';
 
 /**
  * Root application class - wires all modules together.
@@ -15,6 +16,7 @@ class GPSNavigatorApp {
     this.gps = null;
     this.map = null;
     this.ui = null;
+    this.mapPrefetcher = null;
   }
 
   /** Full application bootstrap. */
@@ -47,6 +49,17 @@ class GPSNavigatorApp {
       pwaInstaller.init();
       console.log('[APP] PWA installer initialized');
 
+      // Initialize map prefetcher
+      this.mapPrefetcher = new MapTilePrefetcher();
+      window.mapPrefetcher = this.mapPrefetcher;
+      console.log('[APP] Map prefetcher initialized');
+
+      // Update cache stats on load
+      this.updateCacheStats();
+
+      // Setup offline map controls
+      this.setupOfflineMapControls();
+
       // Initial online status
       this.ui._updateConnectionStatus(navigator.onLine);
       this.gps.setOnline(navigator.onLine);
@@ -74,6 +87,64 @@ class GPSNavigatorApp {
       console.error("SYSTEM INITIALIZATION ERROR:", error);
       alert("> CRITICAL ERROR: SYSTEM INITIALIZATION FAILED\n> " + error);
     }
+  }
+
+  /** Update cached tile count display. */
+  async updateCacheStats() {
+    const stats = await this.mapPrefetcher.getCacheStats();
+    const countEl = document.getElementById('cachedTilesCount');
+    const sizeEl = document.getElementById('storageUsed');
+
+    if (countEl) countEl.textContent = stats.count;
+    if (sizeEl) sizeEl.textContent = stats.sizeMB;
+  }
+
+  /** Wire up the offline map download buttons. */
+  setupOfflineMapControls() {
+    // Download current area
+    document.getElementById('downloadCurrentAreaBtn')?.addEventListener('click', async () => {
+      await this.mapPrefetcher.prefetchCurrentLocation();
+      await this.updateCacheStats();
+    });
+
+    // Download custom area
+    document.getElementById('downloadCustomAreaBtn')?.addEventListener('click', async () => {
+      const lat = prompt('> Enter LATITUDE (e.g., 55.7558):');
+      const lon = prompt('> Enter LONGITUDE (e.g., 37.6173):');
+
+      if (lat && lon) {
+        const latNum = parseFloat(lat);
+        const lonNum = parseFloat(lon);
+
+        if (!isNaN(latNum) && !isNaN(lonNum)) {
+          await this.mapPrefetcher.prefetchArea(latNum, lonNum);
+          await this.updateCacheStats();
+        } else {
+          alert('> ERROR: Invalid coordinates');
+        }
+      }
+    });
+
+    // View cache stats
+    document.getElementById('viewCacheStatsBtn')?.addEventListener('click', async () => {
+      const stats = await this.mapPrefetcher.getCacheStats();
+      alert(`> MAP CACHE STATISTICS:\n\n> Tiles cached: ${stats.count}\n> Storage used: ~${stats.sizeMB} MB\n\n> These tiles are available offline!`);
+    });
+
+    // Clear map cache
+    document.getElementById('clearMapCacheBtn')?.addEventListener('click', async () => {
+      if (confirm('> Are you sure you want to delete all cached map tiles?')) {
+        const cache = await caches.open('gps-nav-map-tiles-v2');
+        const keys = await cache.keys();
+
+        for (const request of keys) {
+          await cache.delete(request);
+        }
+
+        await this.updateCacheStats();
+        alert('> Map cache cleared successfully');
+      }
+    });
   }
 
   /** Display the boot sequence animation. */
