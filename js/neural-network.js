@@ -85,6 +85,26 @@ export class NeuralNetwork {
    * @param {number[]} targets
    */
   train(inputs, targets) {
+    // Validate inputs
+    if (!inputs || inputs.length !== this.inputSize) {
+      console.error('[NN] Invalid inputs length:', inputs?.length, 'expected:', this.inputSize);
+      return;
+    }
+    if (!targets || targets.length !== this.outputSize) {
+      console.error('[NN] Invalid targets length:', targets?.length, 'expected:', this.outputSize);
+      return;
+    }
+
+    // Check for NaN or Infinity values
+    if (inputs.some(v => !isFinite(v))) {
+      console.error('[NN] Invalid input values (NaN/Infinity):', inputs);
+      return;
+    }
+    if (targets.some(v => !isFinite(v))) {
+      console.error('[NN] Invalid target values (NaN/Infinity):', targets);
+      return;
+    }
+
     const { hidden, outputs } = this.forward(inputs);
 
     const outputErrors = outputs.map((o, i) => targets[i] - o);
