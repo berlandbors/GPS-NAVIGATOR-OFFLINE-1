@@ -32,3 +32,8 @@
 @keyframes fadeIn {
   to { opacity: 1; }
 }
+
+@keyframes gps-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
