@@ -581,3 +581,49 @@ input[type="text"]::placeholder {
 .pwa-installed .install-promo {
   display: none !important;
 }
+
+/* ============================================
+   OFFLINE MAP DOWNLOAD SECTION
+   ============================================ */
+
+.offline-info {
+  margin-bottom: 20px;
+  padding: 15px;
+  font-size: 18px;
+}
+
+#cacheStats.stats {
+  background: rgba(0, 255, 0, 0.05);
+  border: 2px solid var(--terminal-green);
+  padding: 15px;
+  font-size: 20px;
+  color: var(--terminal-green);
+  margin-top: 15px;
+}
+
+#cacheStats.stats span {
+  color: var(--terminal-amber);
+  font-weight: bold;
+}
+
+progress {
+  width: 100%;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--terminal-green);
+  border-radius: 0;
+}
+
+progress::-webkit-progress-bar {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #00ff00, #00ff00);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+}
+
+progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #00ff00, #00ff00);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+}
