@@ -110,7 +110,7 @@ export class GPSManager {
   getLocationAndDisplay() {
     const outputEl = document.getElementById("output");
     outputEl.className = "info";
-    outputEl.innerHTML = '&gt; ACQUIRING GPS SIGNAL (UP TO 30s)<span class="loading"></span>';
+    outputEl.innerHTML = '&gt; INITIALIZING GPS<span class="loading"></span>';
 
     if (!navigator.geolocation) {
       outputEl.className = "error";
@@ -118,42 +118,38 @@ export class GPSManager {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        this._collectGPSDataForAI(position);
-        const smoothed = this._smooth(position);
-        const { altitude, accuracy, speed, heading } = position.coords;
-        const { timestamp } = position;
+    this._getPositionWithRetry(async (position) => {
+      this._collectGPSDataForAI(position);
+      const smoothed = this._smooth(position);
+      const { altitude, accuracy, speed, heading } = position.coords;
+      const { timestamp } = position;
 
-        this.currentLocationData = {
-          lat: smoothed.lat, lng: smoothed.lng,
-          alt: altitude, acc: accuracy,
-          speed, heading, timestamp
-        };
+      this.currentLocationData = {
+        lat: smoothed.lat, lng: smoothed.lng,
+        alt: altitude, acc: accuracy,
+        speed, heading, timestamp
+      };
 
-        const links = generateMapLinks(smoothed.lat, smoothed.lng);
-        const geocodeResult = await reverseGeocode(smoothed.lat, smoothed.lng, this.db, this.isOnline);
+      const links = generateMapLinks(smoothed.lat, smoothed.lng);
+      const geocodeResult = await reverseGeocode(smoothed.lat, smoothed.lng, this.db, this.isOnline);
 
-        const htmlContent = this._generateLocationHTML(
-          smoothed.lat, smoothed.lng, altitude, accuracy, timestamp,
-          geocodeResult.cityName, geocodeResult.fullAddress, links, geocodeResult.fromCache
-        );
+      const htmlContent = this._generateLocationHTML(
+        smoothed.lat, smoothed.lng, altitude, accuracy, timestamp,
+        geocodeResult.cityName, geocodeResult.fullAddress, links, geocodeResult.fromCache
+      );
 
-        document.getElementById('locationDisplayContent').innerHTML = htmlContent;
-        document.getElementById('locationModal').classList.add('active');
+      document.getElementById('locationDisplayContent').innerHTML = htmlContent;
+      document.getElementById('locationModal').classList.add('active');
 
-        outputEl.className = "success";
-        outputEl.innerHTML = "&gt; LOCATION DATA ACQUIRED SUCCESSFULLY (Click [SHOW MY LOCATION] to view again)";
+      outputEl.className = "success";
+      outputEl.innerHTML = "&gt; LOCATION DATA ACQUIRED SUCCESSFULLY (Click [SHOW MY LOCATION] to view again)";
 
-        this.currentUserPosition = { lat: smoothed.lat, lng: smoothed.lng };
-        this.mapManager.updateCurrentLocationMarker(smoothed.lat, smoothed.lng, accuracy);
-        this.mapManager.map.setView([smoothed.lat, smoothed.lng], 15);
+      this.currentUserPosition = { lat: smoothed.lat, lng: smoothed.lng };
+      this.mapManager.updateCurrentLocationMarker(smoothed.lat, smoothed.lng, accuracy);
+      this.mapManager.map.setView([smoothed.lat, smoothed.lng], 15);
 
-        if (this._onAIUpdate) this._onAIUpdate();
-      },
-      (error) => this._handleGeolocationError(error, outputEl),
-      { enableHighAccuracy: true, timeout: CONFIG.GPS_TIMEOUT, maximumAge: 0 }
-    );
+      if (this._onAIUpdate) this._onAIUpdate();
+    }, outputEl);
   }
 
   /**
@@ -165,7 +161,7 @@ export class GPSManager {
     const pointNameInput = document.getElementById("pointName");
 
     outputEl.className = "info";
-    outputEl.innerHTML = '&gt; ACQUIRING GPS SIGNAL (UP TO 30s)<span class="loading"></span>';
+    outputEl.innerHTML = '&gt; INITIALIZING GPS<span class="loading"></span>';
 
     if (!navigator.geolocation) {
       outputEl.className = "error";
@@ -180,45 +176,41 @@ export class GPSManager {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        this._collectGPSDataForAI(position);
-        const smoothed = this._smooth(position);
-        const { altitude, accuracy, speed, heading } = position.coords;
-        const pointName = pointNameValue ||
-          `WAYPOINT_${new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19)}`;
+    this._getPositionWithRetry(async (position) => {
+      this._collectGPSDataForAI(position);
+      const smoothed = this._smooth(position);
+      const { altitude, accuracy, speed, heading } = position.coords;
+      const pointName = pointNameValue ||
+        `WAYPOINT_${new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19)}`;
 
-        const point = {
-          name: pointName,
-          latitude: smoothed.lat, longitude: smoothed.lng,
-          altitude: altitude || null, accuracy,
-          speed: speed || null, heading: heading || null,
-          timestamp: new Date().toISOString()
-        };
+      const point = {
+        name: pointName,
+        latitude: smoothed.lat, longitude: smoothed.lng,
+        altitude: altitude || null, accuracy,
+        speed: speed || null, heading: heading || null,
+        timestamp: new Date().toISOString()
+      };
 
-        try {
-          await this.db.savePoint(point);
-          outputEl.className = "success";
-          outputEl.innerHTML = `
-            <strong>&gt; WAYPOINT SAVED SUCCESSFULLY</strong><br>
-            &gt; NAME: ${escapeHtml(point.name)}<br>
-            &gt; LAT: ${smoothed.lat.toFixed(6)} | LON: ${smoothed.lng.toFixed(6)}<br>
-            ${altitude ? `&gt; ALT: ${altitude.toFixed(1)}m<br>` : ""}
-            &gt; ACCURACY: ${accuracy.toFixed(1)}m (AI Smoothed)<br>
-            ${speed !== null ? `&gt; SPEED: ${(speed * 3.6).toFixed(1)} km/h<br>` : ""}
-            &gt; TIME: ${new Date(point.timestamp).toLocaleString("ru-RU")}
-          `;
-          pointNameInput.value = "";
-          if (this._onPointsSaved) this._onPointsSaved();
-          if (this._onAIUpdate) this._onAIUpdate();
-        } catch (error) {
-          outputEl.className = "error";
-          outputEl.innerHTML = `&gt; ERROR: ${escapeHtml(error.toString())}`;
-        }
-      },
-      (error) => this._handleGeolocationError(error, outputEl),
-      { enableHighAccuracy: true, timeout: CONFIG.GPS_TIMEOUT, maximumAge: 0 }
-    );
+      try {
+        await this.db.savePoint(point);
+        outputEl.className = "success";
+        outputEl.innerHTML = `
+          <strong>&gt; WAYPOINT SAVED SUCCESSFULLY</strong><br>
+          &gt; NAME: ${escapeHtml(point.name)}<br>
+          &gt; LAT: ${smoothed.lat.toFixed(6)} | LON: ${smoothed.lng.toFixed(6)}<br>
+          ${altitude ? `&gt; ALT: ${altitude.toFixed(1)}m<br>` : ""}
+          &gt; ACCURACY: ${accuracy.toFixed(1)}m (AI Smoothed)<br>
+          ${speed !== null ? `&gt; SPEED: ${(speed * 3.6).toFixed(1)} km/h<br>` : ""}
+          &gt; TIME: ${new Date(point.timestamp).toLocaleString("ru-RU")}
+        `;
+        pointNameInput.value = "";
+        if (this._onPointsSaved) this._onPointsSaved();
+        if (this._onAIUpdate) this._onAIUpdate();
+      } catch (error) {
+        outputEl.className = "error";
+        outputEl.innerHTML = `&gt; ERROR: ${escapeHtml(error.toString())}`;
+      }
+    }, outputEl);
   }
 
   /**
@@ -301,10 +293,98 @@ export class GPSManager {
         outputEl.innerHTML = "&gt; ERROR: POSITION UNAVAILABLE<br>&gt; CHECK GPS SETTINGS<br>&gt; TRY MOVING TO OPEN AREA";
         break;
       case error.TIMEOUT:
-        outputEl.innerHTML = "&gt; ERROR: GPS TIMEOUT<br>&gt; SIGNAL ACQUISITION TAKING TOO LONG<br>&gt; RETRY IN OPEN AREA";
+        outputEl.innerHTML = `
+          &gt; ERROR: GPS TIMEOUT AFTER ALL ATTEMPTS<br>
+          &gt; TROUBLESHOOTING:<br>
+          &gt; &bull; Move to open area with clear sky view<br>
+          &gt; &bull; Check if Location Services enabled<br>
+          &gt; &bull; Restart device GPS<br>
+          &gt; &bull; Wait 1-2 minutes and try again
+        `;
         break;
       default:
         outputEl.innerHTML = "&gt; ERROR: UNKNOWN GEOLOCATION ERROR";
+    }
+  }
+
+  /**
+   * @private
+   * Show progress UI during a GPS acquisition attempt.
+   * @param {number} attempt - Current attempt number (1-based)
+   * @param {number} timeout - Timeout for this attempt in milliseconds
+   */
+  _updateProgressUI(attempt, timeout) {
+    const outputEl = document.getElementById("output");
+    const maxAttempts = CONFIG.GPS_TIMEOUT_ATTEMPTS.length;
+    const timeoutSec = timeout / 1000;
+
+    outputEl.className = "info";
+    outputEl.innerHTML = `
+      &gt; ACQUIRING GPS SIGNAL (ATTEMPT ${attempt}/${maxAttempts})<br>
+      &gt; TIMEOUT: ${timeoutSec}s — Keep device steady, ensure clear sky view<span class="loading"></span><br>
+      <div class="gps-progress-bar"><div class="gps-progress-fill gps-timeout-${timeoutSec}s"></div></div>
+    `;
+  }
+
+  /**
+   * @private
+   * Show a brief retry status message between attempts.
+   * @param {number} nextAttempt - The upcoming attempt number (1-based)
+   * @param {number} total - Total number of attempts
+   */
+  _showRetryMessage(nextAttempt, total) {
+    const outputEl = document.getElementById("output");
+    outputEl.className = "info";
+    outputEl.innerHTML = `&gt; ATTEMPT ${nextAttempt - 1}/${total} FAILED, RETRYING<span class="loading"></span>`;
+  }
+
+  /**
+   * @private
+   * Attempt to get the GPS position once with the given timeout.
+   * @param {number} timeout - Timeout in milliseconds
+   * @param {number} attemptNumber - Current attempt number (1-based)
+   * @returns {Promise<GeolocationPosition>}
+   */
+  _tryGetPosition(timeout, attemptNumber) {
+    return new Promise((resolve, reject) => {
+      this._updateProgressUI(attemptNumber, timeout);
+      console.log(`[GPS] Attempt ${attemptNumber}/${CONFIG.GPS_TIMEOUT_ATTEMPTS.length}, timeout: ${timeout / 1000}s`);
+
+      navigator.geolocation.getCurrentPosition(
+        resolve,
+        reject,
+        { enableHighAccuracy: true, timeout, maximumAge: 0 }
+      );
+    });
+  }
+
+  /**
+   * @private
+   * Get GPS position with progressive retry logic.
+   * Tries each timeout in CONFIG.GPS_TIMEOUT_ATTEMPTS before giving up.
+   * @param {Function} successCallback - Async callback invoked with the GeolocationPosition
+   * @param {HTMLElement} outputEl - Output element used for error display
+   * @returns {Promise<void>}
+   */
+  async _getPositionWithRetry(successCallback, outputEl) {
+    const attempts = CONFIG.GPS_TIMEOUT_ATTEMPTS.slice(0, CONFIG.MAX_GPS_RETRIES);
+
+    for (let i = 0; i < attempts.length; i++) {
+      try {
+        const position = await this._tryGetPosition(attempts[i], i + 1);
+        return await successCallback(position);
+      } catch (error) {
+        if (
+          i === attempts.length - 1 ||
+          error.code === error.PERMISSION_DENIED ||
+          error.code === error.POSITION_UNAVAILABLE
+        ) {
+          this._handleGeolocationError(error, outputEl);
+          return;
+        }
+        this._showRetryMessage(i + 2, attempts.length); // i is 0-based; next attempt number = i + 2
+        await new Promise(r => setTimeout(r, 500));
+      }
     }
   }
 
