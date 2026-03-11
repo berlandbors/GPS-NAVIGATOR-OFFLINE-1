@@ -6,6 +6,36 @@ import { UIManager } from './ui.js';
 import { PWAInstaller } from './pwa-install.js';
 import { MapTilePrefetcher } from './map-prefetcher.js';
 
+// Global error boundaries
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[APP] Unhandled Promise Rejection:', event.reason);
+  event.preventDefault();
+
+  const errorMsg = document.createElement('div');
+  errorMsg.className = 'global-error';
+
+  const warning = document.createElement('strong');
+  warning.textContent = '⚠️ SYSTEM WARNING: ';
+
+  const msgText = document.createTextNode(
+    event.reason?.message || 'Unknown error occurred'
+  );
+
+  const dismissBtn = document.createElement('button');
+  dismissBtn.textContent = 'DISMISS';
+  dismissBtn.addEventListener('click', () => errorMsg.remove());
+
+  errorMsg.appendChild(warning);
+  errorMsg.appendChild(msgText);
+  errorMsg.appendChild(document.createTextNode(' '));
+  errorMsg.appendChild(dismissBtn);
+  document.body.appendChild(errorMsg);
+});
+
+window.addEventListener('error', (event) => {
+  console.error('[APP] Uncaught Error:', event.error);
+});
+
 /**
  * Root application class - wires all modules together.
  */
@@ -199,7 +229,7 @@ if (document.readyState === 'loading') {
 // Register Service Worker for PWA functionality
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then((registration) => {
         console.log('> SERVICE WORKER REGISTERED:', registration.scope);
 

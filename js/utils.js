@@ -64,7 +64,25 @@ export function formatDistance(meters) {
  */
 export function validatePointName(name) {
   if (!name) return true;
-  return name.length <= 100 && name.trim().length > 0;
+
+  // Length check
+  if (name.length > 100) return false;
+
+  // Trim check
+  const trimmed = name.trim();
+  if (trimmed.length === 0) return false;
+
+  // Disallow potential XSS patterns
+  const dangerousPatterns = [
+    /<script/i,
+    /javascript:/i,
+    /on\w+\s*=\s*['"]?/i,
+    /<\s*iframe/i,
+    /<\s*object/i,
+    /<\s*embed/i,
+  ];
+
+  return !dangerousPatterns.some(pattern => pattern.test(name));
 }
 
 /**
@@ -119,6 +137,10 @@ export function generateMapLinks(lat, lng) {
   };
 }
 
+// Rate-limiting state for Nominatim API (1 request per second max)
+let lastGeocodeTime = 0;
+const GEOCODE_MIN_INTERVAL = 1000;
+
 /**
  * Reverse-geocode a coordinate, using the DB cache when available.
  * @param {number} lat
@@ -143,7 +165,17 @@ export async function reverseGeocode(lat, lng, db, isOnline) {
     };
   }
 
+  // Rate limiting: ensure at least GEOCODE_MIN_INTERVAL ms between requests
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastGeocodeTime;
+  if (timeSinceLastRequest < GEOCODE_MIN_INTERVAL) {
+    await new Promise(resolve =>
+      setTimeout(resolve, GEOCODE_MIN_INTERVAL - timeSinceLastRequest)
+    );
+  }
+
   try {
+    lastGeocodeTime = Date.now();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.GEOCODE_TIMEOUT);
 

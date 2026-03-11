@@ -42,18 +42,35 @@ const CDN_ASSETS = [
   'https://fonts.googleapis.com/css2?family=VT323&display=swap'
 ];
 
+/**
+ * Cache assets individually so a single failure does not abort the install.
+ * @param {Cache} cache
+ * @param {string[]} assets
+ */
+async function cacheAssetsIndividually(cache, assets) {
+  const results = await Promise.allSettled(
+    assets.map(url =>
+      cache.add(url).catch(err => {
+        console.warn(`[SW] Failed to cache ${url}:`, err);
+        return null;
+      })
+    )
+  );
+
+  // Each inner promise resolves with null on failure (via .catch), so check for null values
+  const failed = results.filter(r => r.status === 'fulfilled' && r.value === null);
+  if (failed.length > 0) {
+    console.warn(`[SW] ${failed.length} assets failed to cache (non-critical)`);
+  }
+}
+
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing v3.1.0...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    caches.open(CACHE_NAME).then(async (cache) => {
       console.log('[SW] Caching static assets');
-      return cache.addAll([...STATIC_ASSETS, ...CDN_ASSETS])
-        .catch((err) => {
-          console.error('[SW] Cache error:', err);
-          // Continue even if some assets fail
-          return Promise.resolve();
-        });
+      await cacheAssetsIndividually(cache, [...STATIC_ASSETS, ...CDN_ASSETS]);
     }).then(() => {
       console.log('[SW] Installed successfully');
       return self.skipWaiting(); // Activate immediately

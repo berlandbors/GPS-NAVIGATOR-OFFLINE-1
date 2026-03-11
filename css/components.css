@@ -627,3 +627,34 @@ progress::-moz-progress-bar {
   background: linear-gradient(90deg, #00ff00, #00ff00);
   box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
 }
+
+/* Global error banner for unhandled errors */
+.global-error {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: var(--terminal-bg);
+  color: var(--terminal-red);
+  border: 2px solid var(--terminal-red);
+  padding: 12px 20px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+}
+
+.global-error button {
+  margin-left: 12px;
+  border-color: var(--terminal-red);
+  color: var(--terminal-red);
+  padding: 4px 12px;
+  font-size: 16px;
+}
+
+.global-error button:hover {
+  background: var(--terminal-red);
+  color: var(--terminal-bg);
+}
