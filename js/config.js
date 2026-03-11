@@ -4,8 +4,7 @@ export const CONFIG = {
   STORE_NAME: "gpsPoints",
   GEOCODE_CACHE_STORE: "geocodeCache",
   AI_DATA_STORE: "aiTrainingData",
-  GPS_TIMEOUT: 15000,
-  GPS_TIMEOUT_FALLBACK: 30000, // For poor signal areas
+  GPS_TIMEOUT: 30000,
   TRACKING_TIMEOUT: 15000,
   MAP_UPDATE_DEBOUNCE: 1000,
   GEOCODE_TIMEOUT: 5000,
